@@ -177,16 +177,19 @@ def album_media(cred: Credential, album_id: str) -> List[str]:
     return media
 
 
-def postslack(endpoint: str, imgurl: str):
+def postslack(endpoint: str, imgurl: str, ch: str = "", icon: str = ""):
     header = {
         "Content-type": "application/json",
     }
     query = {
         "username": "一日一善",
-        "icon_emoji": ":amcg:",
-        "channel": "playground",
         "text": f"<{imgurl}|今日の一枚>",
     }
+
+    if ch != "":
+        query["channel"] = ch
+    if icon != "":
+        query["icon_emoji"] = icon
 
     res = rq.post(endpoint, json=query, headers=header)
     res.raise_for_status()
@@ -227,8 +230,14 @@ def main():
     url = random.choice(media_urls) + "=w512"
     print(url)
     with open(CREDENTIAL_FILE) as f:
-        slack_endpoint = yaml.load(f)["slack_endpoint"]
-    postslack(slack_endpoint, url)
+        config = yaml.load(f)
+        slack_endpoint = config["slack_endpoint"]
+        if "slack_channel" in config:
+            slack_channel = config["slack_channel"]
+        if "slack_icon" in config:
+            slack_icon = config["slack_icon"]
+
+    postslack(slack_endpoint, url, slack_channel, slack_icon)
 
 
 if __name__ == '__main__':
