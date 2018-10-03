@@ -130,10 +130,10 @@ def dump_credential(cred: Credential, path: str):
     """
     Dump credential to yml file.
     """
-    cred_dic = {
-        "client_id"    : cred.client_id,
-        "client_secret": cred.client_secret
-    }
+    with open(path) as f:
+        cred_dic = yaml.load(f)
+    cred_dic["client_id"] = cred.client_id
+    cred_dic["client_secret"] = cred.client_secret
     if cred.access_token and cred.refresh_token:
         cred_dic["access_token"]  = cred.access_token
         cred_dic["refresh_token"] = cred.refresh_token
@@ -177,6 +177,21 @@ def album_media(cred: Credential, album_id: str) -> List[str]:
     return media
 
 
+def postslack(endpoint: str, imgurl: str):
+    header = {
+        "Content-type": "application/json",
+    }
+    query = {
+        "username": "一日一善",
+        "icon_emoji": ":amcg:",
+        "channel": "playground",
+        "text": f"<{imgurl}|今日の一枚>",
+    }
+
+    res = rq.post(endpoint, json=query, headers=header)
+    res.raise_for_status()
+
+
 def main():
     cred = load_credential(CREDENTIAL_FILE)
     if cred.access_token is None:
@@ -211,6 +226,9 @@ def main():
     print("Choise new image.")
     url = random.choice(media_urls) + "=w512"
     print(url)
+    with open(CREDENTIAL_FILE) as f:
+        slack_endpoint = yaml.load(f)["slack_endpoint"]
+    postslack(slack_endpoint, url)
 
 
 if __name__ == '__main__':
